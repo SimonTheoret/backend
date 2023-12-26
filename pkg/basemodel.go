@@ -1,9 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type base struct {
 	state     ModelState // Represent the actual state of the model.
@@ -72,4 +75,17 @@ func (b *base) Predict(q *Query, send func([]byte) ([]byte, error)) (*Prediction
 	}
 	pred := &Prediction{Answer: ans, id: q.id}
 	return pred, nil
+}
+
+func (b *base) setReady() {
+	b.state = Ready
+}
+func (b *base) setDown() {
+	b.state = Down
+}
+func (b *base) setLoading() {
+	b.state = Down
+}
+func (b *base) setProcessing() {
+	b.state = Down
 }
