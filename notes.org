@@ -1,0 +1,9 @@
+#+title: Notes
+
+* TODO Modifier prediction
+Prediction est trop restrictif: Changer pour un différent type de message, plus
+générique
+
+* TODO reformater fonctions de basemodel
+Les fonctions de basemodel devrait être séparée en plus petites fonctions, et
+utilisé ~defer setStateReady()~ pour gérer l'état du modèle

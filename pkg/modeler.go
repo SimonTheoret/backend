@@ -37,9 +37,9 @@ type modeler interface {
 // calculating, etc), send the logs informations. A model can be reached by
 // HTTP, pipe, ports, FFI.
 type baseModeler interface {
-	Predict(*Query, func([]byte) ([]byte, error)) (*Prediction, error) // Sends a query and returns a prediction
-	GetState() ModelState                                              // Get the state of the model
-	GetLogs(func([]byte) ([]byte, error)) (Json, error)                // Get the logs associated with the model
+	Predict(*Query, func([]byte) (*[]byte, error)) (*Response, error) // Sends a query and returns a prediction
+	GetState() ModelState                                             // Get the state of the model
+	GetLogs(func([]byte) (*[]byte, error)) (Json, error)              // Get the logs associated with the model
 }
 
 // Queries are given to a modeler. They contain necessary information, such as
@@ -51,7 +51,7 @@ type Query struct {
 }
 
 // Predictions are returned by the modeler and contain the result
-type Prediction struct {
-	Answer Json // Return values of the model
-	id     int  // Identifier for the prediction. It is not part of the returned json
+type Response struct {
+	Response Json // Return values of the model
+	id       int  // Identifier for the prediction. It is not part of the returned json
 }
