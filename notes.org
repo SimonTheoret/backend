@@ -1,9 +1,20 @@
 #+title: Notes
-
-* TODO Modifier prediction
+* TODO
+** DONE Modifier prediction
 Prediction est trop restrictif: Changer pour un différent type de message, plus
 générique
-
-* TODO reformater fonctions de basemodel
+- [X] Changer prediction pour Response
+- [X] Ajouter Response de base
+- [X] Construire enums de Response
+  
+** DONE Reformater fonctions de basemodel
 Les fonctions de basemodel devrait être séparée en plus petites fonctions, et
 utilisé ~defer setStateReady()~ pour gérer l'état du modèle
+
+** TODO Modifier comportement des erreurs
+Les erreurs feront probablement crash le programme. Créer catégories d'erreur
+(récupérable ou non) et gérer les erreurs.
+- [ ] Log
+- [ ] Catégories d'erreurs (Enum?)
+** TODO Implémenter swagger docs (?)
+* Api documentation

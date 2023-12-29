@@ -6,7 +6,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-var jsonify = jsoniter.ConfigCompatibleWithStandardLibrary
+// Allows to use as if it was the std
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type base struct {
 	state     ModelState // Represent the actual state of the model.
@@ -14,32 +15,20 @@ type base struct {
 	id        int
 }
 
-// TODO: Reformat
-func (b *base) GetLogs(send func([]byte) (*[]byte, error)) (Json, error) {
-	if b.state != Ready {
-		err := fmt.Errorf("Model is not ready. Model %s with id %v is %s",
-			b.ModelName, b.id, b.state)
+func (b *base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
+	defer b.setReady()
+	err := b.verifyIfReady()
+	if err != nil {
 		return nil, err
 	}
 	q := Query{
-		Instruction: "get logs",
-		Input:       nil,
-		id:          b.id,
+		Input:     nil,
+		QueryType: GetLogs,
+		id:        b.id,
 	}
-	encoded, err := jsonify.Marshal(q)
+	logs, err := b.encodeSendDecode(&q, send)
 	if err != nil {
-		b.state = Ready
-		return nil, fmt.Errorf("Failed to get the logs: %w", err)
-	}
-	b.state = Processing
-	res, err := send(encoded)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get the logs: %w", err)
-	}
-	var logs Json
-	err = jsonify.Unmarshal(*res, logs)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get the logs: %w", err)
+		return nil, fmt.Errorf("Encountered error while encoding, sending or decoding: %w", err)
 	}
 	return logs, nil
 }
@@ -50,44 +39,69 @@ func (b *base) GetState() ModelState {
 }
 
 // Start the prediction computation
-// TODO: Reformat
-func (b *base) Predict(q *Query, send func([]byte) ([]byte, error)) (*Response, error) {
-	if b.state != Ready {
-		err := fmt.Errorf("Model is not ready. Model %s with id %v is %s",
-			b.ModelName, b.id, b.state)
+func (b *base) Predict(q *Query, send func([]byte) (Json, error)) (Json, error) {
+	defer b.setReady()
+	err := b.verifyIfReady()
+	if err != nil {
 		return nil, err
 	}
-	encoded, err := jsonify.Marshal(q)
+	ans, err := b.encodeSendDecode(q, send)
 	if err != nil {
-		b.state = Ready
+		return nil,
+			fmt.Errorf("Encountered error while encoding, sending or decoding: %w", err)
+	}
+	return ans, nil
+}
+
+// Utility function for setting the state of the base at Ready
+func (b *base) setReady() {
+	b.state = Ready
+}
+
+// Utility function for setting the state of the base at Down
+func (b *base) setDown() {
+	b.state = Down
+}
+
+// Utility function for setting the state of the base at Loading
+func (b *base) setLoading() {
+	b.state = Loading
+}
+
+// Utility function for setting the state of the base at Processing
+func (b *base) setProcessing() {
+	b.state = Processing
+}
+
+// Utility function for comparing the state of the model with a given state
+func (b *base) isInState(s ModelState) bool {
+	return b.GetState() == s
+}
+
+// Utility function for comparing the state of the model with a given state.
+// It returns the formated error.
+func (b *base) verifyIfReady() error {
+	if !b.isInState(Ready) {
+		err := fmt.Errorf("Model is not ready. Model %s with id %v is %s",
+			b.ModelName, b.id, b.state)
+		return err
+	}
+	return nil
+}
+
+// Utility function for encoding a query, sending it over and than returning the
+// Response. It internally modifies the state of the base
+func (b *base) encodeSendDecode(q *Query, send func([]byte) (Json, error)) (Json, error) {
+	defer b.setReady()
+	encoded, err := json.Marshal(q)
+	if err != nil {
 		return nil, fmt.Errorf("Failed to predict: %w", err)
 	}
 	b.state = Processing
 	res, err := send(encoded)
 	if err != nil {
-		b.state = Ready
-		//TODO: Better error management in the case of down model.
 		return nil, fmt.Errorf("Failed to predict: %w", err)
 	}
 	b.state = Ready
-	var ans Json
-	err = jsonify.Unmarshal(res, ans)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to predict: %w", err)
-	}
-	pred := &Response{Response: ans, id: q.id}
-	return pred, nil
-}
-
-func (b *base) setReady() {
-	b.state = Ready
-}
-func (b *base) setDown() {
-	b.state = Down
-}
-func (b *base) setLoading() {
-	b.state = Down
-}
-func (b *base) setProcessing() {
-	b.state = Down
+	return res, err
 }
