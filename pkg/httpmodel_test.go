@@ -5,17 +5,16 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 // Sets up the model for testing
-func setUpModel(ts *httptest.Server) HttpModel {
+func setUpHttpModel(ts *httptest.Server) HttpModel {
 
 	h := HttpModel{
-		base: &base{
+		basicModeler: base{
 			state:     Ready,
 			ModelName: "testing base",
 			id:        0,
@@ -27,9 +26,9 @@ func setUpModel(ts *httptest.Server) HttpModel {
 }
 
 // Sets up the Query for testing
-func setUpQuery(t *testing.T) Query {
+func setUpQuery(t *testing.T) FrontEndQuery {
 
-	return Query{
+	return FrontEndQuery{
 		Input: Json{
 			"val0": 0.0,
 			"val1": 1.0,
@@ -42,9 +41,9 @@ func setUpQuery(t *testing.T) Query {
 }
 
 // Sets up the Prediction for testing
-func setUpResponse(t *testing.T) Response {
+func setUpResponse(t *testing.T) ModelResponse {
 
-	return Response{
+	return ModelResponse{
 		Response: Json{
 			"val0": 0.0,
 			"val1": 1.0,
@@ -58,7 +57,7 @@ func setUpResponse(t *testing.T) Response {
 // Sets up the test server  This server returns the response of the given
 // responses res. It is implemented as if it was an actual (constant) model
 // which always sends back the same input.
-func setUpModelPrediction(t *testing.T, res Response) *httptest.Server {
+func setUpModelPrediction(t *testing.T, res ModelResponse) *httptest.Server {
 
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(res.Response) // res.Response is the constant output of the model
@@ -66,7 +65,7 @@ func setUpModelPrediction(t *testing.T, res Response) *httptest.Server {
 }
 
 // Sets up the test server. This servers returns a fake log.
-func setUpModelLogs(t *testing.T, res Response) *httptest.Server {
+func setUpModelLogs(t *testing.T, res ModelResponse) *httptest.Server {
 
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(res.Response) // res.Response is the constant output of the model
@@ -81,7 +80,7 @@ func TestMarshalUnmarshalQuery(t *testing.T) {
 		err = fmt.Errorf("Could not marshal the query: %w", err)
 		fmt.Println(err)
 	}
-	var uq Query
+	var uq FrontEndQuery
 	err = json.Unmarshal(mq, &uq)
 	if err != nil {
 		err = fmt.Errorf("Could not unmarshal the query: %w", err)
@@ -99,7 +98,7 @@ func TestMarshalUnmarshalResponse(t *testing.T) {
 		err = fmt.Errorf("Could not marshal the response: %w", err)
 		fmt.Println(err)
 	}
-	var ur Response
+	var ur ModelResponse
 	err = json.Unmarshal(mr, &ur)
 	if err != nil {
 		err = fmt.Errorf("Could not unmarshal the response: %w", err)
@@ -109,14 +108,14 @@ func TestMarshalUnmarshalResponse(t *testing.T) {
 }
 
 // Tests if the prediction and the returned prediction are identical. It uses
-// the mock server
+// a mock server
 func TestSend(t *testing.T) {
 
 	pred := setUpResponse(t)
 	ts := setUpModelPrediction(t, pred)
 	defer ts.Close()
 
-	h := setUpModel(ts)
+	h := setUpHttpModel(ts)
 
 	message := setUpQuery(t)
 	encoded, err := json.Marshal(message)
@@ -128,10 +127,9 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	testPred := Response{Response: nil, ResponseType: Predictions, id: 0}
-	testPred.Response = res
+	testPred := ModelResponse{Response: nil, ResponseType: Predictions, id: 0} //mock the formating of a model
+	testPred.Response = res                                                    // continues the mocking
 
-	log.SetOutput(os.Stdout)
 	assert.EqualValues(t,
 		pred,
 		testPred,
@@ -141,9 +139,9 @@ func TestSend(t *testing.T) {
 // Tests wheter the connection with the mock server is well established
 func TestServerReceivesResponse(t *testing.T) {
 	notEmpty := Json{"notempty": true}
-	ts := setUpModelPrediction(t, Response{Response: notEmpty})
+	ts := setUpModelPrediction(t, ModelResponse{Response: notEmpty})
 	defer ts.Close()
-	h := setUpModel(ts)
+	h := setUpHttpModel(ts)
 	message := "test"
 	encoded, err := json.Marshal(message)
 	if err != nil {
@@ -160,17 +158,19 @@ func TestPredict(t *testing.T) {
 	ts := setUpModelPrediction(t, pred)
 	defer ts.Close()
 
-	h := setUpModel(ts)
-	returnValues, err := h.base.Predict(&q, h.send)
+	h := setUpHttpModel(ts)
+	returnValues, err := h.Predict(&q, h.send)
 	if err != nil {
 		log.Fatal(err)
 	}
-	testPred := Response{Response: returnValues, ResponseType: Predictions, id: 0}
+	testPred := ModelResponse{Response: returnValues, ResponseType: Predictions, id: 0}
 	assert.EqualValues(t, pred, testPred)
 
 }
+
+// Tests if the returned modeler of setUpodel implements the Modeler interface
 func TestInterface(t *testing.T) {
-	h := setUpModel(nil)
-	_, ok := any(h).(Modeler)
+	h := setUpHttpModel(setUpModelPrediction(t, ModelResponse{}))
+	_, ok := any(&h).(Modeler) //Must be &h because an interface is always a pointer type
 	assert.True(t, ok, "httpmodeler does NOT implement the modeler interface")
 }

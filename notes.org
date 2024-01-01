@@ -18,3 +18,4 @@ Les erreurs feront probablement crash le programme. Créer catégories d'erreur
 - [ ] Catégories d'erreurs (Enum?)
 ** TODO Implémenter swagger docs (?)
 * Api documentation
+* Data flow

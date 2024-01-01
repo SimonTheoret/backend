@@ -36,7 +36,7 @@ func (s ModelState) String() string {
 }
 
 type Modeler interface {
-	send([]byte) (Json, error) // Send data to the model.
+	send(body []byte) (Json, error) // Send data to the model.
 	basicModeler
 }
 
@@ -45,37 +45,36 @@ type Modeler interface {
 // calculating, etc), send the logs informations. A model can be reached by
 // HTTP, pipe, ports, FFI.
 type basicModeler interface {
-	Predict(*Query, func([]byte) (Json, error)) (Json, error) // Sends a query and returns a prediction
-	GetState() ModelState                                     // Get the state of the model
-	GetLogs(func([]byte) (Json, error)) (Json, error)         // Get the logs associated with the model
+	Predict(*FrontEndQuery, func([]byte) (Json, error)) (Json, error) // Sends a query and returns a prediction
+	GetState() ModelState                                             // Get the state of the model
+	GetLogs(func([]byte) (Json, error)) (Json, error)                 // Get the logs associated with the model
+	Id() int
 }
 
 // Queries are given to a modeler. They contain necessary information, such as
 // the inputs and the instructions given to the model itself.
-type Query struct {
+type FrontEndQuery struct {
 	Input     Json      // Information given to the model for prediction. Possibly empty
 	QueryType queryType // Type of the query
 	id        int       // Identifier for the query
 }
 
-// Response are a wrapper around the returned values of the model. They are
+// ModelResponse are a wrapper around the returned values of the model. They are
 // built with a responseFormatter.
-type Response struct {
+type ModelResponse struct {
 	Response     Json         // Returned values of the model.
 	ResponseType responseType // Type of the Response.
 	id           int          // Identifier for the prediction. It is not part of the returned json
 }
 
 const (
-	NoPredictions responseType = iota // Correctly formated response, but without any values in the prediction field
-	Predictions
-	Empty
-	Logs
-	Error
-	Unknown
+	Unknown     responseType = iota // Unknown response type. Default type
+	Logs                            // Response containing the model's logs
+	Error                           // Response contains an error message
+	Predictions                     // Correctly formated response, but without any values in the prediction field
 )
 
 const (
-	Predict queryType = iota
-	GetLogs
+	Predict queryType = iota // Query with the goal to predict
+	GetLogs                  // Query with the goal of getting the logs
 )

@@ -15,13 +15,13 @@ type base struct {
 	id        int
 }
 
-func (b *base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
+func (b base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	err := b.verifyIfReady()
 	if err != nil {
 		return nil, err
 	}
-	q := Query{
+	q := FrontEndQuery{
 		Input:     nil,
 		QueryType: GetLogs,
 		id:        b.id,
@@ -34,12 +34,12 @@ func (b *base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
 }
 
 // Getter for the state field in model
-func (b *base) GetState() ModelState {
+func (b base) GetState() ModelState {
 	return b.state
 }
 
 // Start the prediction computation
-func (b *base) Predict(q *Query, send func([]byte) (Json, error)) (Json, error) {
+func (b base) Predict(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	err := b.verifyIfReady()
 	if err != nil {
@@ -91,17 +91,21 @@ func (b *base) verifyIfReady() error {
 
 // Utility function for encoding a query, sending it over and than returning the
 // Response. It internally modifies the state of the base
-func (b *base) encodeSendDecode(q *Query, send func([]byte) (Json, error)) (Json, error) {
+func (b base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	encoded, err := json.Marshal(q)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to predict: %w", err)
 	}
-	b.state = Processing
+	b.setProcessing()
 	res, err := send(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to predict: %w", err)
 	}
-	b.state = Ready
+	b.setReady()
 	return res, err
+}
+
+func (b base) Id() int {
+	return b.id
 }

@@ -11,8 +11,8 @@ import (
 )
 
 type HttpModel struct {
-	base basicModeler //base struct
-	dest string       // destination for the requests post
+	basicModeler        //base struct
+	dest         string // destination for the requests
 }
 
 // This function takes in an array of bytes, such as the one resulting from
