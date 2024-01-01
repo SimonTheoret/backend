@@ -16,6 +16,20 @@ Les erreurs feront probablement crash le programme. Créer catégories d'erreur
 (récupérable ou non) et gérer les erreurs.
 - [ ] Log
 - [ ] Catégories d'erreurs (Enum?)
+** TODO Spécifier une API pour les FrontEnd et les modèles
 ** TODO Implémenter swagger docs (?)
-* Api documentation
-* Data flow
+* API documentation
+** FrontEnd endpoints
+*** Predict for a specific model
+- Uses post method
+- "/'model id'/predict"
+*** Get logs for a specific model
+- Uses get method
+- "/'model id'/getlogs"
+*** Clean logs for a specific model
+- Uses get method
+- "/'model id'/cleanlogs"
+** BackEnd endpoints
+*** HTTP models
+In the case of models registered as ~httpmodeler~, they response depends on the
+content of the post.

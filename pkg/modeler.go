@@ -35,6 +35,8 @@ func (s ModelState) String() string {
 	return "Undefined state"
 }
 
+// TODO: rework modeler and basic modeler hierachy ?
+
 type Modeler interface {
 	send(body []byte) (Json, error) // Send data to the model.
 	basicModeler

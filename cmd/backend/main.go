@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -17,14 +16,14 @@ func main() {
 	flag.Parse()
 
 	address := fmt.Sprintf("0.0.0.0:%d", *port) // use address 0.0.0.0:port
-	f, _ := os.Create(*log)
-	gin.DefaultWriter = io.MultiWriter(f) // write logs to file f
+	f, err := os.Create(*log)
+	if err != nil {
+		fmt.Println(err) // print err if logging to file is impossible
+		os.Exit(1)       //Stops program
+	}
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout) // write logs to file f
 
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
+	r.POST("predict", ModelPredict)
 	r.Run(address) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")}
 }
