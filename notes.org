@@ -17,7 +17,6 @@ Les erreurs feront probablement crash le programme. Créer catégories d'erreur
 - [ ] Log
 - [ ] Catégories d'erreurs (Enum?)
 ** TODO Spécifier une API pour les FrontEnd et les modèles
-** TODO Implémenter swagger docs (?)
 ** TODO implémenter fonctionnalité d'ajout de modèle sans restart
 * API documentation
 ** FrontEnd endpoints
