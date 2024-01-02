@@ -35,7 +35,7 @@ func (h *HttpModel) send(body []byte) (Json, error) {
 	return jsonBody, nil
 }
 
-// Starts model, waiting for queries
+// Starts model, waiting for queries. Start is launched in its own goroutine
 func (h *HttpModel) Start(rf *responseFormatter) {
 
 	for {

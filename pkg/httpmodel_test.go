@@ -36,7 +36,7 @@ func setUpQuery(t *testing.T) FrontEndQuery {
 			"val3": 3.0,
 		},
 		QueryType: Predict,
-		id:        0,
+		Id:        "0",
 	}
 }
 
@@ -51,7 +51,7 @@ func setUpResponse(t *testing.T) ModelResponse {
 			"val3": 3.0,
 		},
 		ResponseType: Predictions,
-		id:           0}
+		Id:           0}
 }
 
 // Sets up the test server  This server returns the response of the given
@@ -127,7 +127,7 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	testPred := ModelResponse{Response: nil, ResponseType: Predictions, id: 0} //mock the formating of a model
+	testPred := ModelResponse{Response: nil, ResponseType: Predictions, Id: 0} //mock the formating of a model
 	testPred.Response = res                                                    // continues the mocking
 
 	assert.EqualValues(t,
@@ -163,7 +163,7 @@ func TestPredict(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	testPred := ModelResponse{Response: returnValues, ResponseType: Predictions, id: 0}
+	testPred := ModelResponse{Response: returnValues, ResponseType: Predictions, Id: 0}
 	assert.EqualValues(t, pred, testPred)
 
 }

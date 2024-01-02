@@ -42,7 +42,7 @@ func (s ModelState) String() string {
 // methods from the basicModeler interfac.
 type Modeler interface {
 	send(body []byte) (Json, error) // Send data to the model.
-	Start(*responseFormatter)       // Start the model, make it wait for input and format responses with a responseFormatter
+	Start(*responseFormatter)       // Start the model, make it wait for input and format responses with a responseFormatter. Must be launched with a goroutine.
 	QueryChannel() InputChan        // returns the channel for the incoming query to this model
 	ResponseChannel() OutputChan    // returns the channel for sending back the response
 	basicModeler                    // base for every model
@@ -64,7 +64,7 @@ type basicModeler interface {
 type FrontEndQuery struct {
 	Input     Json      // Information given to the model for prediction. Possibly empty
 	QueryType queryType // Type of the query
-	id        int       // Identifier for the query
+	Id        string    // Identifier for the query
 }
 
 // ModelResponse are a wrapper around the returned values of the model. They are
@@ -72,7 +72,7 @@ type FrontEndQuery struct {
 type ModelResponse struct {
 	Response     Json         // Returned values of the model.
 	ResponseType responseType // Type of the Response.
-	id           int          // Identifier for the prediction. It is not part of the returned json
+	Id           int          // Identifier for the prediction. It is not part of the returned json
 }
 
 const (
@@ -87,3 +87,31 @@ const (
 	GetLogs                  // Query with the goal of getting the logs
 	UnknownQuery
 )
+
+// Convert the response's type (responseType) to string.
+func (r responseType) String() string {
+	switch r {
+	case Unknown:
+		return "Unknown"
+	case Logs:
+		return "Logs"
+	case Error:
+		return "Error"
+	case Predictions:
+		return "Predictions"
+	}
+	return "Undefined response type"
+}
+
+// Convert the query's type (queryType) to string.
+func (q queryType) String() string {
+	switch q {
+	case Predict:
+		return "Predict"
+	case GetLogs:
+		return "GetLogs"
+	case UnknownQuery:
+		return "UnknownQuery"
+	}
+	return "Undefined query type"
+}

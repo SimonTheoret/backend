@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/rs/xid"
 )
 
 // Allows to use as if it was the std
@@ -24,7 +25,7 @@ func (b base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
 	q := FrontEndQuery{
 		Input:     nil,
 		QueryType: GetLogs,
-		id:        b.id,
+		Id:        xid.New().String(),
 	}
 	logs, err := b.encodeSendDecode(&q, send)
 	if err != nil {

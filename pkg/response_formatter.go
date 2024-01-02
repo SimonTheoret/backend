@@ -106,7 +106,7 @@ func (rf *responseFormatter) FormatRawResponse(rawResponse Json, model Modeler, 
 		err = nil
 	}
 	modelID := model.Id()
-	modelResponse := ModelResponse{Response: preProcessed, ResponseType: resType, id: modelID}
+	modelResponse := ModelResponse{Response: preProcessed, ResponseType: resType, Id: modelID}
 	var postProcessed *ModelResponse
 	if rf.postProcessingFuncs != nil {
 		postProcessed, err = rf.postProcess(&modelResponse, fargs)

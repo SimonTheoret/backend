@@ -20,6 +20,8 @@ func main() {
 	mapper := back.SetUpModels([]back.Modeler{model}, rf) // Build the models and start them
 
 	// Router
-	r.POST("/")
+	r.POST("/post", back.HandlerModelPost(mapper))
+	r.GET("/get", back.HandlerModelGet(mapper))
+
 	r.Run(address) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")}
 }

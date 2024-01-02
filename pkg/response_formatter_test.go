@@ -109,7 +109,7 @@ func TestBasicFormattingResponse(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	expectedResponse := ModelResponse{Response: rawResponse, ResponseType: Unknown, id: 10}
+	expectedResponse := ModelResponse{Response: rawResponse, ResponseType: Unknown, Id: 10}
 	assert.Equal(t, &expectedResponse, response, "Both responses should be equal")
 }
 
@@ -201,6 +201,6 @@ func TestFormatRawResponse(t *testing.T) {
 		"value2": 4,
 	}
 
-	expRes := &ModelResponse{Response: expRaw, ResponseType: Unknown, id: 10}
+	expRes := &ModelResponse{Response: expRaw, ResponseType: Unknown, Id: 10}
 	assert.Equal(t, actRes, expRes, "Both model responses should be equal")
 }
