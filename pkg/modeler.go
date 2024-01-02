@@ -72,7 +72,7 @@ type FrontEndQuery struct {
 type ModelResponse struct {
 	Response     Json         // Returned values of the model.
 	ResponseType responseType // Type of the Response.
-	id           int          // Identifier for the prediction. It is not part of the returned json
+	Id           int          // Identifier for the prediction. It is not part of the returned json
 }
 
 const (
