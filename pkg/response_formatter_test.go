@@ -1,4 +1,4 @@
-package main
+package back
 
 import (
 	"fmt"
@@ -26,6 +26,22 @@ func (tm *testModeler) send([]byte) (Json, error) {
 	var jsonContent Json
 	json.Unmarshal(val, jsonContent)
 	return jsonContent, nil
+}
+
+// Making sure testmodeler implements the Modeler interface.  Channels are not
+// tested
+func (tm *testModeler) QueryChannel() InputChan {
+	return nil
+}
+
+// Making sure testmodeler implements the Modeler interface.  Channels are not
+// tested
+func (tm *testModeler) ResponseChannel() OutputChan {
+	return nil
+}
+
+func (tm *testModeler) Start(rf *responseFormatter) {
+
 }
 
 // Verifies if testModeler implements the modeler interface

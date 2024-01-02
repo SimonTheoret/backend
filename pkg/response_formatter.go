@@ -1,4 +1,4 @@
-package main
+package back
 
 import "fmt"
 
@@ -76,6 +76,14 @@ func (rf *responseFormatter) findResponseType(content Json) responseType {
 		return Predictions
 	case helper("logs"):
 		return Logs
+	case helper("errors"):
+		return Error
+	case helper("Errors"):
+		return Error
+	case helper("error"):
+		return Error
+	case helper("Error"):
+		return Error
 	default:
 		return Unknown
 	}
@@ -149,4 +157,8 @@ func (fb *FormatterBuilder) PostProcessingFunctions(funcs []PostProcessingFuncti
 func (fb *FormatterBuilder) Build() *responseFormatter {
 	rf := fb.rf
 	return &rf
+}
+
+func DefaultFormatter() *responseFormatter {
+	return NewFormatter().Build()
 }

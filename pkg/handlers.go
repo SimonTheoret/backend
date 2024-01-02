@@ -1,4 +1,4 @@
-package main
+package back
 
 import (
 	"fmt"
@@ -7,10 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ModelPredict(c *gin.Context) {
-	cCp := c.Copy()
-	id := cCp.Query("id")
-	if id == "" {
-		c.JSON(http.StatusBadRequest, Json{"content": fmt.Sprintf("No model with matching id. Given id is empty", id)})
+func HandlerModelPost(mm modelMapper) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		cCp := c.Copy()
+		id := cCp.Query("id")
+		if id == "" {
+			c.JSON(
+				http.StatusBadRequest,
+				Json{
+					"content": fmt.Sprintf("No model with matching id. Given id is empty: %s", id)})
+		}
 	}
 }

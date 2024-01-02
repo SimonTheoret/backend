@@ -1,4 +1,4 @@
-package main
+package back
 
 // Represent the possible model states.
 type ModelState int
@@ -37,9 +37,15 @@ func (s ModelState) String() string {
 
 // TODO: rework modeler and basic modeler hierachy ?
 
+// Implemented models. Any structure implementing the modeler inerface is able
+// to communicate with a model with the send function. It also obtains all the
+// methods from the basicModeler interfac.
 type Modeler interface {
 	send(body []byte) (Json, error) // Send data to the model.
-	basicModeler
+	Start(*responseFormatter)       // Start the model, make it wait for input and format responses with a responseFormatter
+	QueryChannel() InputChan        // returns the channel for the incoming query to this model
+	ResponseChannel() OutputChan    // returns the channel for sending back the response
+	basicModeler                    // base for every model
 }
 
 // Interface for every single model. Every model must be able to predict (whether
@@ -79,4 +85,5 @@ const (
 const (
 	Predict queryType = iota // Query with the goal to predict
 	GetLogs                  // Query with the goal of getting the logs
+	UnknownQuery
 )

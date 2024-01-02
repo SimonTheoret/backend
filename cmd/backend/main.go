@@ -1,29 +1,25 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"io"
 	"os"
 
+	back "github.com/SimonTheoret/backend/pkg"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Command line arguments
-	port := flag.Int("port", 3000, "Specify the port")
-	log := flag.String("Log destination", "server.log", "Specify the log file destination")
-	flag.Parse()
-
-	address := fmt.Sprintf("0.0.0.0:%d", *port) // use address 0.0.0.0:port
-	f, err := os.Create(*log)
-	if err != nil {
-		fmt.Println(err) // print err if logging to file is impossible
-		os.Exit(1)       //Stops program
-	}
-	gin.DefaultWriter = io.MultiWriter(f, os.Stdout) // write logs to file f
-
+	// flags, logs, and gin
+	logFile, address := back.SetUp()
+	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout) // write logs to file f
+	rf := back.DefaultFormatter()
 	r := gin.Default()
-	r.POST("predict", ModelPredict)
+
+	// Model(s) and modelMapper
+	model := back.NewHttpModel("TestModel", 0, "127.0.0.1")
+	mapper := back.SetUpModels([]back.Modeler{model}, rf) // Build the models and start them
+
+	// Router
+	r.POST("/")
 	r.Run(address) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")}
 }

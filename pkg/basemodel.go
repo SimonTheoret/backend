@@ -1,4 +1,4 @@
-package main
+package back
 
 import (
 	"fmt"
@@ -91,7 +91,7 @@ func (b *base) verifyIfReady() error {
 
 // Utility function for encoding a query, sending it over and than returning the
 // Response. It internally modifies the state of the base
-func (b base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
+func (b *base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	encoded, err := json.Marshal(q)
 	if err != nil {
@@ -107,5 +107,10 @@ func (b base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)
 }
 
 func (b base) Id() int {
-	return b.id
+	return int(b.id)
+}
+
+func NewBase(name string, id int) basicModeler {
+	b := base{Ready, name, id}
+	return b
 }
