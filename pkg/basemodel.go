@@ -10,13 +10,13 @@ import (
 // Allows to use as if it was the std
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-type base struct {
+type Base struct {
 	state     ModelState // Represent the actual state of the model.
 	ModelName string
 	id        int
 }
 
-func (b base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
+func (b Base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	err := b.verifyIfReady()
 	if err != nil {
@@ -35,12 +35,12 @@ func (b base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
 }
 
 // Getter for the state field in model
-func (b base) GetState() ModelState {
+func (b Base) GetState() ModelState {
 	return b.state
 }
 
 // Start the prediction computation
-func (b base) Predict(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
+func (b Base) Predict(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	err := b.verifyIfReady()
 	if err != nil {
@@ -55,33 +55,33 @@ func (b base) Predict(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, 
 }
 
 // Utility function for setting the state of the base at Ready
-func (b *base) setReady() {
+func (b *Base) setReady() {
 	b.state = Ready
 }
 
 // Utility function for setting the state of the base at Down
-func (b *base) setDown() {
+func (b *Base) setDown() {
 	b.state = Down
 }
 
 // Utility function for setting the state of the base at Loading
-func (b *base) setLoading() {
+func (b *Base) setLoading() {
 	b.state = Loading
 }
 
 // Utility function for setting the state of the base at Processing
-func (b *base) setProcessing() {
+func (b *Base) setProcessing() {
 	b.state = Processing
 }
 
 // Utility function for comparing the state of the model with a given state
-func (b *base) isInState(s ModelState) bool {
+func (b *Base) isInState(s ModelState) bool {
 	return b.GetState() == s
 }
 
 // Utility function for comparing the state of the model with a given state.
 // It returns the formated error.
-func (b *base) verifyIfReady() error {
+func (b *Base) verifyIfReady() error {
 	if !b.isInState(Ready) {
 		err := fmt.Errorf("Model is not ready. Model %s with id %v is %s",
 			b.ModelName, b.id, b.state)
@@ -92,7 +92,7 @@ func (b *base) verifyIfReady() error {
 
 // Utility function for encoding a query, sending it over and than returning the
 // Response. It internally modifies the state of the base
-func (b *base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
+func (b *Base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
 	defer b.setReady()
 	encoded, err := json.Marshal(q)
 	if err != nil {
@@ -107,11 +107,11 @@ func (b *base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error
 	return res, err
 }
 
-func (b base) Id() int {
+func (b Base) Id() int {
 	return int(b.id)
 }
 
-func NewBase(name string, id int) basicModeler {
-	b := base{Ready, name, id}
+func NewBase(name string, id int) Basicmodeler {
+	b := Base{Ready, name, id}
 	return b
 }

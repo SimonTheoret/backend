@@ -12,7 +12,7 @@ import (
 )
 
 type HttpModel struct {
-	basicModeler            //base struct
+	Basicmodeler            //base struct
 	dest         string     // destination for the requests
 	out          OutputChan // Channel used to send ModelResponses
 	in           InputChan  // Channel used to receive Frontend Queries
@@ -100,8 +100,7 @@ func NewHttpModel(name string, id int, dest string) *HttpModel {
 }
 
 // DEPRECATED. This function achieves the same result as the send function.
-// Benchmarks are needed to compare these two versions. This version only uses
-// the std library.
+// Benchmarks are needed to compare these two versions.
 func (h *HttpModel) sendold(body []byte) (Json, error) {
 
 	request, err := http.NewRequest("POST", h.dest, bytes.NewBuffer(body))

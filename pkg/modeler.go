@@ -45,14 +45,14 @@ type Modeler interface {
 	Start(*responseFormatter)       // Start the model, make it wait for input and format responses with a responseFormatter. Must be launched with a goroutine.
 	QueryChannel() InputChan        // returns the channel for the incoming query to this model
 	ResponseChannel() OutputChan    // returns the channel for sending back the response
-	basicModeler                    // base for every model
+	Basicmodeler                    // base for every model
 }
 
 // Interface for every single model. Every model must be able to predict (whether
 // it infers or generates is irrelevant), tell it's state (ready, loading,
 // calculating, etc), send the logs informations. A model can be reached by
 // HTTP, pipe, ports, FFI.
-type basicModeler interface {
+type Basicmodeler interface {
 	Predict(*FrontEndQuery, func([]byte) (Json, error)) (Json, error) // Sends a query and returns a prediction
 	GetState() ModelState                                             // Get the state of the model
 	GetLogs(func([]byte) (Json, error)) (Json, error)                 // Get the logs associated with the model
@@ -72,7 +72,7 @@ type FrontEndQuery struct {
 type ModelResponse struct {
 	Response     Json         // Returned values of the model.
 	ResponseType responseType // Type of the Response.
-	Id           int          // Identifier for the prediction. It is not part of the returned json
+	id           int          // Identifier for the prediction. It is not part of the returned json
 }
 
 const (

@@ -14,7 +14,7 @@ import (
 func setUpHttpModel(ts *httptest.Server) HttpModel {
 
 	h := HttpModel{
-		basicModeler: base{
+		Basicmodeler: Base{
 			state:     Ready,
 			ModelName: "testing base",
 			id:        0,

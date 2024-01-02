@@ -12,7 +12,7 @@ import (
 
 // This mock send function returns always return a random json
 type testModeler struct {
-	basicModeler
+	Basicmodeler
 	dest string
 }
 
@@ -47,7 +47,7 @@ func (tm *testModeler) Start(rf *responseFormatter) {
 // Verifies if testModeler implements the modeler interface
 func TestTestModelerInterface(t *testing.T) {
 	tested := testModeler{
-		basicModeler: base{
+		Basicmodeler: Base{
 			state:     Ready,
 			ModelName: "Test interface",
 			id:        123,
@@ -84,7 +84,7 @@ func setUpRandomJsonResponse(t *testing.T) Json {
 // Returns a testModeler instance
 func setUpTestModeler(t *testing.T) testModeler {
 	return testModeler{
-		basicModeler: base{state: Ready,
+		Basicmodeler: Base{state: Ready,
 			ModelName: "TestModel",
 			id:        10},
 		dest: "Not a destination",
