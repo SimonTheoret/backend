@@ -12,7 +12,7 @@ import (
 
 // This mock send function returns always return a random json
 type testModeler struct {
-	Basicmodeler
+	Modeler
 	dest string
 }
 
@@ -47,7 +47,7 @@ func (tm *testModeler) Start(rf *responseFormatter) {
 // Verifies if testModeler implements the modeler interface
 func TestTestModelerInterface(t *testing.T) {
 	tested := testModeler{
-		Basicmodeler: Base{
+		Modeler: Base{
 			state:     Ready,
 			ModelName: "Test interface",
 			id:        123,
@@ -55,7 +55,7 @@ func TestTestModelerInterface(t *testing.T) {
 		dest: "None",
 	}
 	testP := any(&tested) // Must take & because interfaces are alwaays reference
-	_, ok := testP.(Modeler)
+	_, ok := testP.(Sender)
 	assert.True(t, ok, "testModeler does NOT implement the modeler interface")
 }
 
@@ -84,7 +84,7 @@ func setUpRandomJsonResponse(t *testing.T) Json {
 // Returns a testModeler instance
 func setUpTestModeler(t *testing.T) testModeler {
 	return testModeler{
-		Basicmodeler: Base{state: Ready,
+		Modeler: Base{state: Ready,
 			ModelName: "TestModel",
 			id:        10},
 		dest: "Not a destination",

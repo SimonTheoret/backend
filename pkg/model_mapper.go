@@ -49,7 +49,7 @@ func setUpModelMapper(outChannels []OutputChan, inChannels []InputChan, ids []Id
 // Builds a model mapper based of a slice of modelers and start them. rfs can
 // either be a slice of len == 1 or have a responseFormatter for every model
 // (i.e. len(models) == len(rfs))
-func SetUpModels(models []Modeler, rfs ...*responseFormatter) *modelMapper {
+func SetUpModels(models []Sender, rfs ...*responseFormatter) *modelMapper {
 	var new_rfs []*responseFormatter
 	if len(rfs) == 1 {
 		new_rfs = make([]*responseFormatter, 0, len(models))

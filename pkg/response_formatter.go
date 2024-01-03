@@ -16,9 +16,9 @@ type responseFormatter struct {
 
 // This interface is used to specify the way the response is formatted.
 type Formatter interface {
-	preProcess(Json, ...any) (Json, error)                           //Preprocess the untouched raw response
-	postProcess(*ModelResponse, ...any) (*ModelResponse, error)      //PostProcess the newly created Response
-	FormatRawResponse(Json, Modeler, ...any) (*ModelResponse, error) /* Format the raw response (JSON) into a
+	preProcess(Json, ...any) (Json, error)                          //Preprocess the untouched raw response
+	postProcess(*ModelResponse, ...any) (*ModelResponse, error)     //PostProcess the newly created Response
+	FormatRawResponse(Json, Sender, ...any) (*ModelResponse, error) /* Format the raw response (JSON) into a
 	   Response. It is equivalent to chaining preProcess and postProcess*/
 }
 
@@ -92,7 +92,7 @@ func (rf *responseFormatter) findResponseType(content Json) responseType {
 // Chains preProcess and postProcess. It returns a pointer to the newly created
 // ModelResponse.  If any function returns an error, the processs is immediately
 // stopped and returns the error.  fargs is passed to every function as is.
-func (rf *responseFormatter) FormatRawResponse(rawResponse Json, model Modeler, fargs ...any) (*ModelResponse, error) {
+func (rf *responseFormatter) FormatRawResponse(rawResponse Json, model Sender, fargs ...any) (*ModelResponse, error) {
 	var preProcessed Json
 	var err error
 	resType := rf.findResponseType(rawResponse)

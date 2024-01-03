@@ -1,5 +1,7 @@
 package back
 
+import "github.com/rs/xid"
+
 // Represent the possible model states.
 type ModelState int
 
@@ -40,23 +42,32 @@ func (s ModelState) String() string {
 // Implemented models. Any structure implementing the modeler inerface is able
 // to communicate with a model with the send function. It also obtains all the
 // methods from the basicModeler interfac.
-type Modeler interface {
+type Sender interface {
 	send(body []byte) (Json, error) // Send data to the model.
-	Start(*responseFormatter)       // Start the model, make it wait for input and format responses with a responseFormatter. Must be launched with a goroutine.
-	QueryChannel() InputChan        // returns the channel for the incoming query to this model
-	ResponseChannel() OutputChan    // returns the channel for sending back the response
-	Basicmodeler                    // base for every model
 }
 
 // Interface for every single model. Every model must be able to predict (whether
 // it infers or generates is irrelevant), tell it's state (ready, loading,
 // calculating, etc), send the logs informations. A model can be reached by
 // HTTP, pipe, ports, FFI.
-type Basicmodeler interface {
+type Modeler interface {
 	Predict(*FrontEndQuery, func([]byte) (Json, error)) (Json, error) // Sends a query and returns a prediction
 	GetState() ModelState                                             // Get the state of the model
 	GetLogs(func([]byte) (Json, error)) (Json, error)                 // Get the logs associated with the model
 	Id() int
+	Start(*responseFormatter)    // Start the model, make it wait for input and format responses with a responseFormatter. Must be launched with a goroutine.
+	QueryChannel() InputChan     // returns the channel for the incoming query to this model
+	ResponseChannel() OutputChan // returns the channel for sending back the response
+	Sender
+}
+
+type Message[T Messager] struct {
+	Content     Json
+	MessageType T
+	Id          xid.ID
+	Receiver
+	Sender
+	CreationTime
 }
 
 // Queries are given to a modeler. They contain necessary information, such as

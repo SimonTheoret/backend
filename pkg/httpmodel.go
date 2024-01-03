@@ -12,10 +12,10 @@ import (
 )
 
 type HttpModel struct {
-	Basicmodeler            //base struct
-	dest         string     // destination for the requests
-	out          OutputChan // Channel used to send ModelResponses
-	in           InputChan  // Channel used to receive Frontend Queries
+	Modeler            //base struct
+	dest    string     // destination for the requests
+	out     OutputChan // Channel used to send ModelResponses
+	in      InputChan  // Channel used to receive Frontend Queries
 }
 
 // This function takes in an array of bytes, such as the one resulting from
@@ -92,6 +92,7 @@ func (h *HttpModel) ResponseChannel() OutputChan {
 	return h.out
 }
 
+// Builds a new HttpModel
 func NewHttpModel(name string, id int, dest string) *HttpModel {
 	base := NewBase(name, id)
 	out := make(chan ModelResponse)

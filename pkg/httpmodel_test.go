@@ -14,7 +14,7 @@ import (
 func setUpHttpModel(ts *httptest.Server) HttpModel {
 
 	h := HttpModel{
-		Basicmodeler: Base{
+		Modeler: Base{
 			state:     Ready,
 			ModelName: "testing base",
 			id:        0,
@@ -171,6 +171,6 @@ func TestPredict(t *testing.T) {
 // Tests if the returned modeler of setUpodel implements the Modeler interface
 func TestInterface(t *testing.T) {
 	h := setUpHttpModel(setUpModelPrediction(t, ModelResponse{}))
-	_, ok := any(&h).(Modeler) //Must be &h because an interface is always a pointer type
+	_, ok := any(&h).(Sender) //Must be &h because an interface is always a pointer type
 	assert.True(t, ok, "httpmodeler does NOT implement the modeler interface")
 }

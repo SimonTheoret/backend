@@ -111,7 +111,7 @@ func (b Base) Id() int {
 	return int(b.id)
 }
 
-func NewBase(name string, id int) Basicmodeler {
+func NewBase(name string, id int) Modeler {
 	b := Base{Ready, name, id}
 	return b
 }

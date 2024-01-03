@@ -18,18 +18,4 @@ Les erreurs feront probablement crash le programme. Créer catégories d'erreur
 - [ ] Catégories d'erreurs (Enum?)
 ** DONE Spécifier une API pour les FrontEnd et les modèles
 ** TODO implémenter fonctionnalité d'ajout de modèle sans restart
-* API documentation
-** FrontEnd endpoints
-*** Predict for a specific model
-- Uses post method
-- "/'model id'/predict"
-*** Get logs for a specific model
-- Uses get method
-- "/'model id'/getlogs"
-*** Clean logs for a specific model
-- Uses get method
-- "/'model id'/cleanlogs"
-** BackEnd endpoints
-*** HTTP models
-In the case of models registered as ~httpmodeler~, they response depends on the
-content of the post.
+** TODO Implémenter Response comme générique ?

@@ -17,7 +17,7 @@ func main() {
 
 	// Model(s) and modelMapper
 	model := back.NewHttpModel("TestModel", 0, "127.0.0.1")
-	mapper := back.SetUpModels([]back.Modeler{model}, rf) // Build the models and start them
+	mapper := back.SetUpModels([]back.Sender{model}, rf) // Build the models and start them
 
 	// Router
 	r.POST("/post", back.HandlerModelPost(mapper))

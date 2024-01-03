@@ -13,6 +13,6 @@ func TestBasicModelerForBase(t *testing.T) {
 		ModelName: "BasicModelerTest",
 		id:        123,
 	}
-	_, ok := any(base).(Basicmodeler)
+	_, ok := any(base).(Modeler)
 	assert.True(t, ok, "base does NOT implement the basicModeler interface")
 }
