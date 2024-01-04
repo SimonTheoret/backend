@@ -3,115 +3,112 @@ package back
 import (
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/rs/xid"
 )
 
 // Allows to use as if it was the std
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+// The base struct is an implementer of the modeler interface. The base struct allow to easily build new modeler.
 type Base struct {
-	state     ModelState // Represent the actual state of the model.
 	ModelName string
-	id        int
-}
-
-func (b Base) GetLogs(send func([]byte) (Json, error)) (Json, error) {
-	defer b.setReady()
-	err := b.verifyIfReady()
-	if err != nil {
-		return nil, err
-	}
-	q := FrontEndQuery{
-		Input:     nil,
-		QueryType: GetLogs,
-		Id:        xid.New().String(),
-	}
-	logs, err := b.encodeSendDecode(&q, send)
-	if err != nil {
-		return nil, fmt.Errorf("Encountered error while encoding, sending or decoding: %w", err)
-	}
-	return logs, nil
-}
-
-// Getter for the state field in model
-func (b Base) GetState() ModelState {
-	return b.state
+	id        Id
+	in        InputChan
+	out       OutputChan
+	Sender
 }
 
 // Start the prediction computation
-func (b Base) Predict(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
-	defer b.setReady()
-	err := b.verifyIfReady()
-	if err != nil {
-		return nil, err
-	}
-	ans, err := b.encodeSendDecode(q, send)
+func (b *Base) Predict(mess *message[queryType], opt Options) (Json, error) {
+	content, err := mess.ByteContent()
 	if err != nil {
 		return nil,
-			fmt.Errorf("Encountered error while encoding, sending or decoding: %w", err)
+			fmt.Errorf("Encountered error while predicting: %w", err)
+	}
+	ans, err := b.send(content, Predict, opt)
+	if err != nil {
+		return nil,
+			fmt.Errorf("Encountered error while predicting: %w", err)
 	}
 	return ans, nil
 }
 
-// Utility function for setting the state of the base at Ready
-func (b *Base) setReady() {
-	b.state = Ready
+// Get the logs from the model
+func (b *Base) GetLogs(opt Options) (Json, error) {
+	logs, err := b.send(nil, GetLogs, opt)
+	if err != nil {
+		return nil, fmt.Errorf("Encountered error while sending: %w", err)
+	}
+	return logs, nil
 }
 
-// Utility function for setting the state of the base at Down
-func (b *Base) setDown() {
-	b.state = Down
-}
-
-// Utility function for setting the state of the base at Loading
-func (b *Base) setLoading() {
-	b.state = Loading
-}
-
-// Utility function for setting the state of the base at Processing
-func (b *Base) setProcessing() {
-	b.state = Processing
-}
-
-// Utility function for comparing the state of the model with a given state
-func (b *Base) isInState(s ModelState) bool {
-	return b.GetState() == s
-}
-
-// Utility function for comparing the state of the model with a given state.
-// It returns the formated error.
-func (b *Base) verifyIfReady() error {
-	if !b.isInState(Ready) {
-		err := fmt.Errorf("Model is not ready. Model %s with id %v is %s",
-			b.ModelName, b.id, b.state)
-		return err
+// Clean the logs from the model
+func (b *Base) CleanLogs(mess *message[queryType], opt Options) error {
+	_, err := b.send(nil, CleanLogs, opt)
+	if err != nil {
+		return fmt.Errorf("Encountered error while sending: %w", err)
 	}
 	return nil
 }
 
-// Utility function for encoding a query, sending it over and than returning the
-// Response. It internally modifies the state of the base
-func (b *Base) encodeSendDecode(q *FrontEndQuery, send func([]byte) (Json, error)) (Json, error) {
-	defer b.setReady()
-	encoded, err := json.Marshal(q)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to predict: %w", err)
+// Make the model connection. The model waits for inputs.
+func (b *Base) start(*responseFormatter) error {
+
+	for {
+		in := <-b.in
+
+		t := in.messageType //Can only be queryType
+
+		switch t {
+		case GetLogs: // Case for getting the logs
+			res, err := b.GetLogs()
+			b.manageErrAndSend(rf, res, err)
+		default: //Consider unknown and prediction queries as prediction
+			res, err := b.Predict(&in, b.send)
+			if err != nil {
+				errBody, _ := json.Marshal(err)
+				gin.DefaultErrorWriter.Write(errBody)
+			}
+			b.manageErrAndSend(rf, res, err)
+		}
 	}
-	b.setProcessing()
-	res, err := send(encoded)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to predict: %w", err)
-	}
-	b.setReady()
-	return res, err
+
 }
 
-func (b Base) Id() int {
-	return int(b.id)
+// Helper function. It manages the errors and sends back the *modelResponse.
+func (h *HttpModel) manageErrAndSend(rf *responseFormatter, res Json, err error) {
+	var modelResponse *ModelResponse
+	if err != nil {
+		errBody, _ := json.Marshal(err)
+		gin.DefaultErrorWriter.Write(errBody)
+		jsonError := Json{"error": err.Error()}
+		modelResponse, err = rf.FormatRawResponse(jsonError, h, nil)
+		if err != nil {
+			errBody, _ := json.Marshal(err)
+			gin.DefaultErrorWriter.Write(errBody)
+		}
+	} else {
+		modelResponse, err = rf.FormatRawResponse(res, h, nil)
+		if err != nil {
+			errBody, _ := json.Marshal(err)
+			gin.DefaultErrorWriter.Write(errBody)
+		}
+	}
+	h.out <- *modelResponse
 }
 
-func NewBase(name string, id int) Modeler {
-	b := Base{Ready, name, id}
-	return b
+// Returns the input channel
+func (b *Base) QueryChannel() InputChan {
+	return b.in
+}
+
+// Returns the output channel
+func (b *Base) ResponseChannel() OutputChan {
+	return b.out
+}
+
+// Return the id of the model
+func (b *Base) Id() Id {
+	return b.id
 }
