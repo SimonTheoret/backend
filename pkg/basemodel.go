@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/rs/xid"
 )
 
 // Allows to use as if it was the std
@@ -17,6 +18,10 @@ type Base struct {
 	in        InputChan
 	out       OutputChan
 	Sender
+}
+
+func NewBase(modelName string, sender Sender) Base {
+	return Base{modelName, Id(xid.New()), make(InputChan), make(OutputChan), sender}
 }
 
 // Start the prediction computation
@@ -44,7 +49,7 @@ func (b *Base) GetLogs(opt Options) (Json, error) {
 }
 
 // Clean the logs from the model
-func (b *Base) CleanLogs(mess *message[queryType], opt Options) error {
+func (b *Base) CleanLogs(opt Options) error {
 	_, err := b.send(nil, CleanLogs, opt)
 	if err != nil {
 		return fmt.Errorf("Encountered error while sending: %w", err)
@@ -53,49 +58,57 @@ func (b *Base) CleanLogs(mess *message[queryType], opt Options) error {
 }
 
 // Make the model connection. The model waits for inputs.
-func (b *Base) start(*responseFormatter) error {
+func (b *Base) start(rf *responseFormatter) error {
 
 	for {
 		in := <-b.in
 
 		t := in.messageType //Can only be queryType
+		opts := in.queryOptions
 
 		switch t {
-		case GetLogs: // Case for getting the logs
-			res, err := b.GetLogs()
+		case GetLogs: // Get the logs
+			res, err := b.GetLogs(opts)
+			b.manageErrAndSend(rf, res, err)
+		case CleanLogs: // Clean the logs
+			err := b.CleanLogs(opts)
+			b.manageErrAndSend(rf, nil, err)
+		case Predict: // Predict
+			res, err := b.Predict(in, opts)
 			b.manageErrAndSend(rf, res, err)
 		default: //Consider unknown and prediction queries as prediction
-			res, err := b.Predict(&in, b.send)
+			res, err := b.Predict(in, opts)
 			if err != nil {
 				errBody, _ := json.Marshal(err)
 				gin.DefaultErrorWriter.Write(errBody)
 			}
 			b.manageErrAndSend(rf, res, err)
 		}
+
 	}
 
 }
 
 // Helper function. It manages the errors and sends back the *modelResponse.
-func (h *HttpModel) manageErrAndSend(rf *responseFormatter, res Json, err error) {
-	var modelResponse *ModelResponse
+func (b *Base) manageErrAndSend(rf *responseFormatter, res Json, err error) {
+	var responseMessage *message[responseType]
 	if err != nil {
 		errBody, _ := json.Marshal(err)
 		gin.DefaultErrorWriter.Write(errBody)
 		jsonError := Json{"error": err.Error()}
-		modelResponse, err = rf.FormatRawResponse(jsonError, h, nil)
+		responseMessage, err = rf.FormatRawResponse(jsonError, b, nil)
 		if err != nil {
-			errBody, _ := json.Marshal(err)
+			errBody, _ := json.Marshal(err) // Cannot accept an error when marshaling an error...
 			gin.DefaultErrorWriter.Write(errBody)
 		}
 	} else {
-		modelResponse, err = rf.FormatRawResponse(res, h, nil)
+		responseMessage, err = rf.FormatRawResponse(res, b, nil)
 		if err != nil {
 			errBody, _ := json.Marshal(err)
 			gin.DefaultErrorWriter.Write(errBody)
 		}
 	}
-	h.out <- *modelResponse
+	b.out <- responseMessage
 }
 
 // Returns the input channel

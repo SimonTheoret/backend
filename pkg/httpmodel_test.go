@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/rs/xid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,11 +16,6 @@ import (
 func setUpHttpModel(ts *httptest.Server) HttpModel {
 
 	h := HttpModel{
-		Modeler: Base{
-			state:     Ready,
-			ModelName: "testing base",
-			id:        0,
-		},
 		dest: ts.URL,
 	}
 
@@ -26,41 +23,52 @@ func setUpHttpModel(ts *httptest.Server) HttpModel {
 }
 
 // Sets up the Query for testing
-func setUpQuery(t *testing.T) FrontEndQuery {
+func setUpQuery(t *testing.T) message[queryType] {
 
-	return FrontEndQuery{
-		Input: Json{
+	return message[queryType]{
+		content: Json{
 			"val0": 0.0,
 			"val1": 1.0,
 			"val2": 2.0,
 			"val3": 3.0,
 		},
-		QueryType: Predict,
-		Id:        "0",
+		messageType:     Predict,
+		id:              Id(xid.New()),
+		creationTime:    time.Now(),
+		receiverId:      Id(xid.New()),
+		sender:          "yes yes sender yes yes",
+		queryOptions:    nil,
+		responseOptions: nil,
 	}
 }
 
 // Sets up the Prediction for testing
-func setUpResponse(t *testing.T) ModelResponse {
+func setUpResponse(t *testing.T) message[responseType] {
 
-	return ModelResponse{
-		Response: Json{
-			"val0": 0.0,
-			"val1": 1.0,
-			"val2": 2.0,
-			"val3": 3.0,
+	return message[queryType]{
+		content: Json{
+			"val0": 1.0,
+			"val1": 2.0,
+			"val2": 3.0,
+			"val3": 4.0,
 		},
-		ResponseType: Predictions,
-		Id:           0}
+		messageType:     Predict,
+		id:              Id(xid.New()),
+		creationTime:    time.Now(),
+		receiverId:      Id(xid.New()),
+		sender:          "yes yes sender yes yes",
+		queryOptions:    nil,
+		responseOptions: nil,
+	}
 }
 
-// Sets up the test server  This server returns the response of the given
-// responses res. It is implemented as if it was an actual (constant) model
+// Sets up the test server. This server returns the content of the given
+// message[responseType] res. It is implemented as if it was an actual (constant) model
 // which always sends back the same input.
-func setUpModelPrediction(t *testing.T, res ModelResponse) *httptest.Server {
+func setUpModelPrediction(t *testing.T, res message[responseType]) *httptest.Server {
 
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(res.Response) // res.Response is the constant output of the model
+		json.NewEncoder(w).Encode(res.content) // res.content is the constant output of the model
 	}))
 }
 

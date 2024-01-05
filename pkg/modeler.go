@@ -35,22 +35,23 @@ type Options interface {
 // informations. A model can be reached by HTTP, pipe, ports, FFI.
 type modeler interface {
 	Predict(*message[queryType], Options) (Json, error) // Sends a query and returns a prediction
-	GetLogs(*message[queryType], Options) (Json, error) // Get the logs associated with the model
-	CleanLogs(*message[queryType], Options) error       // Cleans the log of the associated model
-	start(*responseFormatter) error                     // Start the model, make it wait for input and format responses with a responseFormatter. Must be launched with a goroutine.
+	GetLogs(Options) (Json, error)                      // Get the logs associated with the model
+	CleanLogs(Options) error                            // Cleans the log of the associated model
+	start(*responseFormatter) error                     // Start the model, make it wait for input and format responses with a responseFormatter
 	queryChannel() InputChan                            // returns the channel for the incoming query to this model
 	responseChannel() OutputChan                        // returns the channel for sending back the response
 	id() Id                                             // Returns the model id
 	Sender
 }
 type message[T typer] struct {
-	content      Json // JSON content of the message.
-	messageType  T    // Type of the message. Should only be responseType or queryType
-	id           Id
-	creationTime time.Time
-	receiver     string
-	receiverId   Id
-	sender       string
+	content         Json      // JSON content of the message.
+	messageType     T         // Type of the message. Should only be responseType or queryType
+	id              Id        // Unique id for a message
+	creationTime    time.Time // Time when this message was built
+	receiverId      Id        // Receiving model's Id
+	sender          string    // sender description/IP
+	queryOptions    Options   // Options given when sending the message to the model
+	responseOptions Options   // Options given when sending back the message
 }
 
 func (m *message[T]) ByteContent() ([]byte, error) {

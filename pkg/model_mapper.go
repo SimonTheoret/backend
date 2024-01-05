@@ -2,8 +2,8 @@ package back
 
 import "strconv"
 
-type InputChan chan message[queryType]     // These channels send and receive only message containing query
-type OutputChan chan message[responseType] // these channels send and reveive only message containing response
+type InputChan chan *message[queryType]     // These channels send and receive only message containing query
+type OutputChan chan *message[responseType] // these channels send and reveive only message containing response
 
 type modelMapper struct {
 	InputChannels  map[Id]InputChan  // Access to the modeler's receiving channel by their id.
