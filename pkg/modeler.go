@@ -12,7 +12,7 @@ type responseType int
 // Enums for the type of the query. It is used to process the query.
 type queryType int
 
-// Wrapper around a libarary id type.
+// Wrapper around a library id type.
 type Id xid.ID
 
 // Json type as a map

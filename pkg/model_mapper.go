@@ -48,7 +48,7 @@ func setUpModelMapper(outChannels []OutputChan, inChannels []InputChan, ids []Id
 // Builds a model mapper based of a slice of modelers and start them. rfs can
 // either be a slice of len == 1 or have a responseFormatter for every model
 // (i.e. len(models) == len(rfs))
-func SetUpModels(models []Sender, rfs ...*responseFormatter) *modelMapper {
+func SetUpModels(models []modeler, rfs ...*responseFormatter) *modelMapper {
 	var new_rfs []*responseFormatter
 	if len(rfs) == 1 {
 		new_rfs = make([]*responseFormatter, 0, len(models))
@@ -59,10 +59,10 @@ func SetUpModels(models []Sender, rfs ...*responseFormatter) *modelMapper {
 	outChan := make([]OutputChan, 0)
 	ids := make([]Id, 0)
 	for i, m := range models {
-		inChan = append(inChan, m.QueryChannel())
-		outChan = append(outChan, m.ResponseChannel())
-		ids = append(ids, Id(strconv.Itoa(m.Id()))) // ugly conversions
-		go m.Start(new_rfs[i])                      // Launch every model in their own goroutine
+		inChan = append(inChan, m.queryChannel())
+		outChan = append(outChan, m.responseChannel())
+		ids = append(ids, m.id())
+		go m.start(new_rfs[i])                      // Launch every model in their own goroutine
 	}
 	return setUpModelMapper(outChan, inChan, ids)
 }

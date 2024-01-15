@@ -22,7 +22,7 @@ func (h *HttpModel) send(body []byte, qt queryType, options ...any) (Json, error
 		URL(h.dest).                // gives the destination url
 		BodyBytes(body).            // writes the body of the request as body, a slice of bytes
 		ToJSON(&jsonBody).          // convert the response to json and writes it into jsonBody
-		Fetch(context.Background()) //Does the
+		Fetch(context.Background()) // Does the
 	if err != nil {
 		return nil, fmt.Errorf("Error during send method: %w", err)
 	}
