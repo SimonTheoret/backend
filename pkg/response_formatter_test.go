@@ -50,7 +50,7 @@ func TestTestModelerInterface(t *testing.T) {
 		Modeler: Base{
 			state:     Ready,
 			ModelName: "Test interface",
-			id:        123,
+			ID:        123,
 		},
 		dest: "None",
 	}
@@ -86,7 +86,7 @@ func setUpTestModeler(t *testing.T) testModeler {
 	return testModeler{
 		Modeler: Base{state: Ready,
 			ModelName: "TestModel",
-			id:        10},
+			ID:        10},
 		dest: "Not a destination",
 	}
 }

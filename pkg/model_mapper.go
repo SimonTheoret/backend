@@ -1,6 +1,5 @@
 package back
 
-import "strconv"
 
 type InputChan chan *message[queryType]     // These channels send and receive only message containing query
 type OutputChan chan *message[responseType] // these channels send and reveive only message containing response
@@ -13,6 +12,13 @@ type modelMapper struct {
 
 type ModelMapperBuilder struct {
 	mm *modelMapper
+}
+
+// Adds the model to the modelmapper
+func (b *modelMapper) addNewModel( model modeler, id Id ) {
+
+    b.InputChannels[id] = model.queryChannel()
+    b.OutputChannels[id] = model.responseChannel()
 }
 
 // Builds the modelMapper.

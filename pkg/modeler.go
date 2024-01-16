@@ -1,8 +1,10 @@
 package back
 
 import (
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
 )
 
@@ -24,6 +26,7 @@ type Sender interface {
 	send(body []byte, qt queryType, options ...any) (Json, error) // Send data to the model.
 }
 
+
 // Option type are optional arguments for Predict, GetLogs and CleanLogs methods
 // of modeler.
 type Options interface {
@@ -40,7 +43,7 @@ type modeler interface {
 	start(*responseFormatter) error                     // Start the model, make it wait for input and format responses with a responseFormatter
 	queryChannel() InputChan                            // returns the channel for the incoming query to this model
 	responseChannel() OutputChan                        // returns the channel for sending back the response
-	id() Id                                             // Returns the model id
+	Id() Id                                             // Returns the model id
 	Sender
 }
 type message[T typer] struct {

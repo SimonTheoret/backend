@@ -112,12 +112,12 @@ func (b *Base) manageErrAndSend(rf *responseFormatter, res Json, err error) {
 }
 
 // Returns the input channel
-func (b *Base) QueryChannel() InputChan {
+func (b *Base) queryChannel() InputChan {
 	return b.in
 }
 
 // Returns the output channel
-func (b *Base) ResponseChannel() OutputChan {
+func (b *Base) responseChannel() OutputChan {
 	return b.out
 }
 
