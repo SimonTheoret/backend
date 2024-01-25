@@ -11,42 +11,65 @@ import (
 
 func HandlerModelPost(mm *modelMapper) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Query("id")
-		qtype := c.Query("operation")
-		if id != "" && qtype == "addmodel" {
-            sender := BuildSender(c)
-			nId, _ := xid.FromString(id)
-            base := NewBase("", sender)
-			mm.addNewModel(&base, Id(nId))
-		}
-		if id == "" {
+		qid := c.Query("id")
+		if qid == "" {
 			c.JSON(
 				http.StatusBadRequest,
 				Json{
-					"content": fmt.Sprintf("No model with matching id. Given id is empty: %s", id),
+					"content": fmt.Sprintf(
+						"No model with matching id. Given id is empty: %s",
+						qid,
+					),
 				})
 		} else {
-			nId, _ := xid.FromString(id)
-			inChan := mm.InputChannels[Id(nId)]
-			inChan <- BuildQuery(c, qtype, Id(nId))
+			id, err := xid.FromString(qid)
+			if err != nil {
+				c.JSON(
+					http.StatusBadRequest,
+					Json{
+						"content": fmt.Sprintf("Not an id: %s", qid),
+					})
+			}
+			inChan, ok := mm.InputChannels[Id(id)]
+			if !ok {
+				c.JSON(
+					http.StatusBadRequest,
+					Json{
+						"content": fmt.Sprintf("id is not registered: %s", id),
+					})
+			}
+			inChan <- BuildQuery(c, UnknownQuery)
 		}
 	}
 }
 
 func HandlerModelGet(mm *modelMapper) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Query("id")
-		qtype := c.Query("operation")
-		if id == "" {
+		qid := c.Query("id")
+		if qid == "" {
 			c.JSON(
 				http.StatusBadRequest,
 				Json{
-					"content": fmt.Sprintf("No model with matching id. Given id is empty: %s", id),
+					"content": fmt.Sprintf("No model with matching id. Given id is empty: %s", qid),
 				})
 		} else {
-			nId, _ := xid.FromString(id)
-			inChan := mm.InputChannels[Id(nId)]
-			inChan <- BuildQuery(c, qtype, Id(nId))
+			id, err := xid.FromString(qid)
+			if err != nil {
+				c.JSON(
+					http.StatusBadRequest,
+					Json{
+						"content": fmt.Sprintf("Not an id: %s", qid),
+					})
+			}
+			inChan, ok := mm.InputChannels[Id(id)]
+			if !ok {
+				c.JSON(
+					http.StatusBadRequest,
+					Json{
+						"content": fmt.Sprintf("id is not registered: %s", id),
+					})
+			}
+			inChan <- BuildQuery(c, UnknownQuery)
 		}
 	}
 }

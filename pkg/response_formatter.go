@@ -1,9 +1,12 @@
 package back
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type PreProcessingFunction func(raw Json, fargs ...any) (Json, error)
-type PostProcessingFunction func(res *ModelResponse, fargs ...any) (*ModelResponse, error)
+
+type PostProcessingFunction func(res *message[responseType], fargs ...any) (*message[responseType], error)
 
 // Formats the raw response, possibly applies some pre and post processing
 // transformations.
@@ -11,14 +14,23 @@ type responseFormatter struct {
 	rawResponse         Json                     // The raw json, without any modification
 	preProcessingFuncs  []PreProcessingFunction  // Transformations applied as preprocessing
 	postProcessingFuncs []PostProcessingFunction // Transformations applied as postprocessing
-	processedResponse   ModelResponse            // The model response after all processing is completed
 }
 
 // This interface is used to specify the way the response is formatted.
 type Formatter interface {
-	preProcess(Json, ...any) (Json, error)                          //Preprocess the untouched raw response
-	postProcess(*ModelResponse, ...any) (*ModelResponse, error)     //PostProcess the newly created Response
-	FormatRawResponse(Json, Sender, ...any) (*ModelResponse, error) /* Format the raw response (JSON) into a
+	preProcess(
+		Json,
+		...any,
+	) (Json, error) // Preprocess the untouched raw response
+	postProcess(
+		*message[responseType],
+		...any,
+	) (*message[responseType], error) // PostProcess the newly created Response
+	FormatRawResponse(
+		Json,
+		Sender,
+		...any,
+	) (message[responseType], error) /* Format the raw response (JSON) into a
 	   Response. It is equivalent to chaining preProcess and postProcess*/
 }
 
@@ -29,7 +41,10 @@ func (rf *responseFormatter) preProcess(raw Json, fargs ...any) (Json, error) {
 	for _, f := range rf.preProcessingFuncs {
 		newRaw, err := f(raw, fargs)
 		if err != nil {
-			return nil, fmt.Errorf("Could not format the response, preprocessing function failed: %w", err)
+			return nil, fmt.Errorf(
+				"could not format the response, preprocessing function failed: %w",
+				err,
+			)
 		}
 		raw = newRaw
 
@@ -41,11 +56,17 @@ func (rf *responseFormatter) preProcess(raw Json, fargs ...any) (Json, error) {
 // modified ModelResponse.  If any function returns an error, the processs is
 // immediately stopped and returns the error.  fargs is passed to every function
 // as is.
-func (rf *responseFormatter) postProcess(response *ModelResponse, fargs ...any) (*ModelResponse, error) {
+func (rf *responseFormatter) postProcess(
+	response *message[responseType],
+	fargs ...any,
+) (*message[responseType], error) {
 	for _, f := range rf.postProcessingFuncs {
 		newResponse, err := f(response, fargs)
 		if err != nil {
-			return nil, fmt.Errorf("Could not format the response, postprocessing function failed: %w", err)
+			return nil, fmt.Errorf(
+				"could not format the response, postprocessing function failed: %w",
+				err,
+			)
 		}
 		response = newResponse
 
@@ -92,32 +113,33 @@ func (rf *responseFormatter) findResponseType(content Json) responseType {
 // Chains preProcess and postProcess. It returns a pointer to the newly created
 // ModelResponse.  If any function returns an error, the processs is immediately
 // stopped and returns the error.  fargs is passed to every function as is.
-func (rf *responseFormatter) FormatRawResponse(rawResponse Json, model Sender, fargs ...any) (*ModelResponse, error) {
+func (rf *responseFormatter) FormatRawResponse(
+	query *message[queryType],
+	rawResponse Json,
+	model Modeler,
+	fargs ...any,
+) (*message[responseType], error) {
 	var preProcessed Json
 	var err error
 	resType := rf.findResponseType(rawResponse)
 	if rf.preProcessingFuncs != nil {
 		preProcessed, err = rf.preProcess(rawResponse, fargs)
 		if err != nil {
-			return nil, fmt.Errorf("Could not format the raw response: %w", err)
+			return nil, fmt.Errorf("could not format the raw response: %w", err)
 		}
 	} else {
 		preProcessed = rawResponse
-		err = nil
 	}
-	modelID := model.Id()
-	modelResponse := ModelResponse{Response: preProcessed, ResponseType: resType, Id: modelID}
-	var postProcessed *ModelResponse
+	modelResponse := query.Convert(preProcessed, resType)
+	var postProcessed *message[responseType]
 	if rf.postProcessingFuncs != nil {
-		postProcessed, err = rf.postProcess(&modelResponse, fargs)
+		postProcessed, err = rf.postProcess(modelResponse, fargs)
 		if err != nil {
-			return nil, fmt.Errorf("Could not format the raw response: %w", err)
+			return nil, fmt.Errorf("could not format the raw response: %w", err)
 		}
 	} else {
-		postProcessed = &modelResponse
-		err = nil
+		postProcessed = modelResponse
 	}
-	rf.processedResponse = *postProcessed
 	return postProcessed, nil
 }
 
@@ -128,10 +150,11 @@ type FormatterBuilder struct {
 
 // Starts the chaining of options, with the end goal of building a responseFormatter.
 func NewFormatter() *FormatterBuilder {
-	rf := responseFormatter{rawResponse: nil,
+	rf := responseFormatter{
+		rawResponse:         nil,
 		preProcessingFuncs:  nil,
 		postProcessingFuncs: nil,
-		processedResponse:   ModelResponse{}}
+	}
 	return &FormatterBuilder{rf: rf}
 }
 
@@ -142,13 +165,17 @@ func (fb *FormatterBuilder) RawResponse(rawResponse Json) *FormatterBuilder {
 }
 
 // Sets the preprocessing functions of the formatter. Used to chain the options.
-func (fb *FormatterBuilder) PreProcessingFunctions(funcs []PreProcessingFunction) *FormatterBuilder {
+func (fb *FormatterBuilder) PreProcessingFunctions(
+	funcs []PreProcessingFunction,
+) *FormatterBuilder {
 	fb.rf.preProcessingFuncs = funcs
 	return fb
 }
 
 // Sets the postprocessing functions of the formatter. Used to chain the options.
-func (fb *FormatterBuilder) PostProcessingFunctions(funcs []PostProcessingFunction) *FormatterBuilder {
+func (fb *FormatterBuilder) PostProcessingFunctions(
+	funcs []PostProcessingFunction,
+) *FormatterBuilder {
 	fb.rf.postProcessingFuncs = funcs
 	return fb
 }

@@ -1,8 +1,9 @@
 package back
 
-
-type InputChan chan *message[queryType]     // These channels send and receive only message containing query
-type OutputChan chan *message[responseType] // these channels send and reveive only message containing response
+type (
+	InputChan  chan *message[queryType]    // These channels send and receive only message containing query
+	OutputChan chan *message[responseType] // these channels send and reveive only message containing response
+)
 
 type modelMapper struct {
 	InputChannels  map[Id]InputChan  // Access to the modeler's receiving channel by their id.
@@ -28,7 +29,7 @@ func (b *ModelMapperBuilder) Build() *modelMapper {
 
 // channels and ids must be the same dimension and have the same order.
 func (b *ModelMapperBuilder) InputChan(channels []InputChan, ids []Id) *ModelMapperBuilder {
-	var chans map[Id]InputChan
+	chans := make(map[Id]InputChan)
 	for i, v := range channels {
 		chans[ids[i]] = v
 	}
@@ -38,7 +39,7 @@ func (b *ModelMapperBuilder) InputChan(channels []InputChan, ids []Id) *ModelMap
 
 // channels and ids must be the same dimension and have the same order.
 func (b *ModelMapperBuilder) OutputChan(channels []OutputChan, ids []Id) *ModelMapperBuilder {
-	var chans map[Id]OutputChan
+	chans := make(map[Id]OutputChan)
 	for i, v := range channels {
 		chans[ids[i]] = v
 	}
@@ -54,12 +55,10 @@ func setUpModelMapper(outChannels []OutputChan, inChannels []InputChan, ids []Id
 // Builds a model mapper based of a slice of modelers and start them. rfs can
 // either be a slice of len == 1 or have a responseFormatter for every model
 // (i.e. len(models) == len(rfs))
-func SetUpModels(models []modeler, rfs ...*responseFormatter) *modelMapper {
+func SetUpModels(models []Modeler, rfs ...*responseFormatter) *modelMapper {
 	var new_rfs []*responseFormatter
 	if len(rfs) == 1 {
 		new_rfs = make([]*responseFormatter, 0, len(models))
-	} else {
-
 	}
 	inChan := make([]InputChan, 0)
 	outChan := make([]OutputChan, 0)
@@ -67,8 +66,8 @@ func SetUpModels(models []modeler, rfs ...*responseFormatter) *modelMapper {
 	for i, m := range models {
 		inChan = append(inChan, m.queryChannel())
 		outChan = append(outChan, m.responseChannel())
-		ids = append(ids, m.id())
-		go m.start(new_rfs[i])                      // Launch every model in their own goroutine
+		ids = append(ids, m.Id()) // ugly conversions
+		go m.start(new_rfs[i])    // Launch every model in their own goroutine
 	}
 	return setUpModelMapper(outChan, inChan, ids)
 }

@@ -29,12 +29,12 @@ func (b *Base) Predict(mess *message[queryType], opt Options) (Json, error) {
 	content, err := mess.ByteContent()
 	if err != nil {
 		return nil,
-			fmt.Errorf("Encountered error while predicting: %w", err)
+			fmt.Errorf("encountered error while predicting: %w", err)
 	}
 	ans, err := b.send(content, Predict, opt)
 	if err != nil {
 		return nil,
-			fmt.Errorf("Encountered error while predicting: %w", err)
+			fmt.Errorf("encountered error while predicting: %w", err)
 	}
 	return ans, nil
 }
@@ -43,7 +43,7 @@ func (b *Base) Predict(mess *message[queryType], opt Options) (Json, error) {
 func (b *Base) GetLogs(opt Options) (Json, error) {
 	logs, err := b.send(nil, GetLogs, opt)
 	if err != nil {
-		return nil, fmt.Errorf("Encountered error while sending: %w", err)
+		return nil, fmt.Errorf("encountered error while sending: %w", err)
 	}
 	return logs, nil
 }
@@ -52,60 +52,64 @@ func (b *Base) GetLogs(opt Options) (Json, error) {
 func (b *Base) CleanLogs(opt Options) error {
 	_, err := b.send(nil, CleanLogs, opt)
 	if err != nil {
-		return fmt.Errorf("Encountered error while sending: %w", err)
+		return fmt.Errorf("encountered error while sending: %w", err)
 	}
 	return nil
 }
 
 // Make the model connection. The model waits for inputs.
-func (b *Base) start(rf *responseFormatter) error {
-
+func (b *Base) start(rf *responseFormatter) {
+	var err error
 	for {
 		in := <-b.in
 
-		t := in.messageType //Can only be queryType
+		t := in.messageType // Can only be queryType
 		opts := in.queryOptions
 
 		switch t {
 		case GetLogs: // Get the logs
 			res, err := b.GetLogs(opts)
-			b.manageErrAndSend(rf, res, err)
+			b.manageErrAndSend(in, rf, res, err)
 		case CleanLogs: // Clean the logs
 			err := b.CleanLogs(opts)
-			b.manageErrAndSend(rf, nil, err)
+			b.manageErrAndSend(in, rf, nil, err)
 		case Predict: // Predict
 			res, err := b.Predict(in, opts)
-			b.manageErrAndSend(rf, res, err)
-		default: //Consider unknown and prediction queries as prediction
+			b.manageErrAndSend(in, rf, res, err)
+		default: // Consider unknown and prediction queries as prediction
 			res, err := b.Predict(in, opts)
-			if err != nil {
-				errBody, _ := json.Marshal(err)
-				gin.DefaultErrorWriter.Write(errBody)
-			}
-			b.manageErrAndSend(rf, res, err)
+			b.manageErrAndSend(in, rf, res, err)
+		}
+		if err != nil {
+			errBody, _ := json.Marshal(err)
+			_, _ = gin.DefaultErrorWriter.Write(errBody)
 		}
 
 	}
-
 }
 
 // Helper function. It manages the errors and sends back the *modelResponse.
-func (b *Base) manageErrAndSend(rf *responseFormatter, res Json, err error) {
+func (b *Base) manageErrAndSend(
+	query *message[queryType],
+	rf *responseFormatter,
+	res Json,
+	err error,
+) {
 	var responseMessage *message[responseType]
 	if err != nil {
 		errBody, _ := json.Marshal(err)
-		gin.DefaultErrorWriter.Write(errBody)
+		_, _ = gin.DefaultErrorWriter.Write(errBody)
 		jsonError := Json{"error": err.Error()}
-		responseMessage, err = rf.FormatRawResponse(jsonError, b, nil)
+		responseMessage, err = rf.FormatRawResponse(query, jsonError, b, nil)
 		if err != nil {
 			errBody, _ := json.Marshal(err) // Cannot accept an error when marshaling an error...
-			gin.DefaultErrorWriter.Write(errBody)
+			_, _ = gin.DefaultErrorWriter.Write(errBody)
 		}
 	} else {
-		responseMessage, err = rf.FormatRawResponse(res, b, nil)
+		responseMessage, err = rf.FormatRawResponse(query, res, b, nil)
 		if err != nil {
 			errBody, _ := json.Marshal(err)
-			gin.DefaultErrorWriter.Write(errBody)
+			_, _ = gin.DefaultErrorWriter.Write(errBody)
 		}
 	}
 	b.out <- responseMessage

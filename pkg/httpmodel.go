@@ -8,7 +8,7 @@ import (
 )
 
 type HttpModel struct {
-	dest string // destination for the requests
+	Dest string // destination for the requests
 }
 
 // This function takes in an array of bytes, such as the one resulting from
@@ -19,12 +19,13 @@ func (h *HttpModel) send(body []byte, qt queryType, options ...any) (Json, error
 
 	var jsonBody Json
 	err := requests.
-		URL(h.dest).                // gives the destination url
+		URL(h.Dest).                // gives the destination url
 		BodyBytes(body).            // writes the body of the request as body, a slice of bytes
 		ToJSON(&jsonBody).          // convert the response to json and writes it into jsonBody
 		Fetch(context.Background()) // Does the
 	if err != nil {
-		return nil, fmt.Errorf("Error during send method: %w", err)
+		return nil, fmt.Errorf("error during send method: %w", err)
 	}
 	return jsonBody, nil
 }
+

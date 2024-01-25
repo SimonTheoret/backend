@@ -36,11 +36,11 @@ type Options interface {
 // Interface for every single model. Every model must be able to predict
 // (whether it infers or generates data is irrelevant), send the logs
 // informations. A model can be reached by HTTP, pipe, ports, FFI.
-type modeler interface {
+type Modeler interface {
 	Predict(*message[queryType], Options) (Json, error) // Sends a query and returns a prediction
 	GetLogs(Options) (Json, error)                      // Get the logs associated with the model
 	CleanLogs(Options) error                            // Cleans the log of the associated model
-	start(*responseFormatter) error                     // Start the model, make it wait for input and format responses with a responseFormatter
+	start(*responseFormatter)                     // Start the model, make it wait for input and format responses with a responseFormatter
 	queryChannel() InputChan                            // returns the channel for the incoming query to this model
 	responseChannel() OutputChan                        // returns the channel for sending back the response
 	Id() Id                                             // Returns the model id
@@ -59,6 +59,19 @@ type message[T typer] struct {
 
 func (m *message[T]) ByteContent() ([]byte, error) {
 	return json.Marshal(m.content)
+}
+
+// Converts a query to a response and gives it the content newContent
+func (m *message[queryType]) Convert(newContent Json, rt responseType) *message[responseType]{
+    mess := message[responseType]{}
+    mess.id = m.id
+    mess.receiverId = m.receiverId
+    mess.sender = m.sender
+    mess.queryOptions = m.queryOptions
+    mess.responseOptions = m.responseOptions
+    mess.content = newContent
+    mess.creationTime = time.Now()
+    return &mess
 }
 
 // Interface for responseType and queryType
